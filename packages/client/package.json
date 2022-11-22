@@ -23,6 +23,7 @@
     "axios": "^0.18.0",
     "buefy": "^0.6.5",
     "libphonenumber-js": "^1.1.7",
+    "node-sass": "^8.0.0",
     "nuxt": "^2.6.2",
     "nuxt-buefy": "^0.0.4",
     "vue": "^2.6.10",
