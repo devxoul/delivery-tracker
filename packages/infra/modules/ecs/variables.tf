@@ -25,3 +25,7 @@ variable "iam_task_role_arn" {
 variable "sha" {
   type = string
 }
+
+variable "desired_count" {
+  type = number
+}

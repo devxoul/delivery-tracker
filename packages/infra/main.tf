@@ -37,6 +37,7 @@ locals {
         "subnet-09a9e252",
         "subnet-e110f0ca",
       ]
+      ecs_desired_count = 4
     }
     dev = {
       environment = "dev"
@@ -52,6 +53,7 @@ locals {
         "subnet-02e3f88277d180bd3",
         "subnet-045efcb67f6404af6",
       ]
+      ecs_desired_count = 2
     }
   }[replace(terraform.workspace, "delivery-tracker-", "")]
 }
@@ -98,4 +100,5 @@ module "ecs" {
   iam_execution_role_arn = module.iam.ecs_execution_role.arn
   iam_task_role_arn      = module.iam.ecs_task_role.arn
   sha                    = var.sha
+  desired_count          = local.config.ecs_desired_count
 }
