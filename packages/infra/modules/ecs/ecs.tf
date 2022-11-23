@@ -46,7 +46,7 @@ resource "aws_ecs_task_definition" "task_definition" {
   container_definitions = jsonencode([
     {
       name      = "apiserver"
-      image     = "599087160579.dkr.ecr.ap-northeast-1.amazonaws.com/delivery-tracker:${var.image_tag}"
+      image     = "599087160579.dkr.ecr.ap-northeast-1.amazonaws.com/delivery-tracker:${var.sha}"
       essential = true
 
       cpu         = null

@@ -1,1 +1,1 @@
-image_tag = "latest"
+sha = "latest"

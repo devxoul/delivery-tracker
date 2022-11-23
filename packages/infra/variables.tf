@@ -1,3 +1,3 @@
-variable "image_tag" {
+variable "sha" {
   type = string
 }

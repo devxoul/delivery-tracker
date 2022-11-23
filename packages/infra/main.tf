@@ -97,5 +97,5 @@ module "ecs" {
   target_group_arn       = module.alb.target_group_arn
   iam_execution_role_arn = module.iam.ecs_execution_role.arn
   iam_task_role_arn      = module.iam.ecs_task_role.arn
-  image_tag              = var.image_tag
+  sha                    = var.sha
 }

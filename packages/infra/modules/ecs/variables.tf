@@ -22,6 +22,6 @@ variable "iam_task_role_arn" {
   type = string
 }
 
-variable "image_tag" {
+variable "sha" {
   type = string
 }
