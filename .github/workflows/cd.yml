@@ -4,21 +4,21 @@ on:
     branches:
       - main
 
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: '배포할 커밋 SHA (7자)'
+        required: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    defaults:
+      run:
+        working-directory: packages/apiserver
     steps:
       - uses: actions/checkout@v3
-
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: "16"
-
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.9
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -33,9 +33,7 @@ jobs:
           docker pull docker.pkg.github.com/$GITHUB_REPOSITORY/buildcache || true
 
       - name: Build Docker Image
-        run: |
-          cd packages/apiserver
-          docker build -t delivery-tracker --cache-from=docker.pkg.github.com/$GITHUB_REPOSITORY/buildcache --build-arg BUILDKIT_INLINE_CACHE=1 .
+        run: docker build -t delivery-tracker --cache-from=docker.pkg.github.com/$GITHUB_REPOSITORY/buildcache --build-arg BUILDKIT_INLINE_CACHE=1 .
 
       - name: Push Docker Cache
         run: |
@@ -50,48 +48,64 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Prepare Docker Metadata
-        id: metadata
-        run: |
-          echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
-
       - name: Push Docker Image
         run: |
           docker tag delivery-tracker $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          docker tag delivery-tracker $ECR_REGISTRY/$ECR_REPOSITORY:$SHA
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$SHA
+          docker tag delivery-tracker $ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_SHA::7}
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_SHA::7}
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: delivery-tracker
-          SHA: ${{ steps.metadata.outputs.short_sha }}
 
       - name: Logout from ECR
         if: always()
         run: docker logout ${{ steps.login-ecr.outputs.registry }}
 
-      - name: Run Terraform (dev)
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: always()
+    defaults:
+      run:
+        working-directory: packages/infra
+    env:
+      TF_INPUT: 0
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.ACTIONS_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.ACTIONS_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          cli_config_credentials_token: ${{ secrets.TERRAFORM_API_TOKEN }}
+
+      - name: Prepare Terraform Metadata (prod)
+        if: github.event_name == 'workflow_dispatch'
         run: |
-          curl --location --request POST 'https://app.terraform.io/api/v2/runs' \
-            --header "Authorization: Bearer $TERRAFORM_API_TOKEN" \
-            --header 'Content-Type: application/vnd.api+json' \
-            --data-raw '{
-              "data": {
-                "attributes": {
-                  "variables": [
-                    { "key": "image_tag", "value": "6174867" }
-                  ]
-                },
-                "type": "runs",
-                "relationships": {
-                  "workspace": {
-                    "data": {
-                      "type": "workspaces",
-                      "id": "ws-JAS3y1sJCPUnKV2L"
-                    }
-                  }
-                }
-              }
-            }'
-        env:
-          TERRAFORM_API_TOKEN: ${{ secrets.TERRAFORM_API_TOKEN }}
+          echo "TF_WORKSPACE=prod" >> $GITHUB_ENV
+          echo "TF_VAR_sha=${{ github.event.inputs.sha }}" >> $GITHUB_ENV
+
+      - name: Prepare Terraform Metadata (dev)
+        if: github.event_name == 'push'
+        run: |
+          echo "TF_WORKSPACE=dev" >> $GITHUB_ENV
+          echo "TF_VAR_sha=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Pull State
+        run: terraform state pull
+
+      - name: Terraform Plan
+        run: terraform plan
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
