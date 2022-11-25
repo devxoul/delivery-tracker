@@ -24,6 +24,7 @@ provider "aws" {
     tags = {
       Project     = "delivery-tracker"
       Environment = local.config.environment
+      Terraform   = true
     }
   }
 }
