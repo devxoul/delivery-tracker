@@ -19,6 +19,13 @@ terraform {
 
 provider "aws" {
   region = "ap-northeast-1"
+
+  default_tags {
+    tags = {
+      Project     = "delivery-tracker"
+      Environment = local.config.environment
+    }
+  }
 }
 
 locals {

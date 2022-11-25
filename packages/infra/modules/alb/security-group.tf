@@ -3,9 +3,7 @@ resource "aws_security_group" "alb" {
   vpc_id = var.vpc_id
 
   tags = {
-    Name        = "sg-delivery-tracker-${var.environment}-lb"
-    Project     = "delivery-tracker"
-    Environment = var.environment
+    Name = "sg-delivery-tracker-${var.environment}-lb"
   }
 }
 

@@ -14,11 +14,6 @@ resource "aws_alb_target_group" "default" {
     create_before_destroy = true
     ignore_changes        = [name]
   }
-
-  tags = {
-    Project     = "delivery-tracker"
-    Environment = var.environment
-  }
 }
 
 resource "random_string" "alb_suffix" {

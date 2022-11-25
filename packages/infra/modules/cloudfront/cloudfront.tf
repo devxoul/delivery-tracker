@@ -46,7 +46,5 @@ resource "aws_cloudfront_distribution" "alb" {
   tags = {
     Name        = "delivery-tracker-${var.environment}"
     Description = "delivery-tracker-${var.environment}"
-    Project     = "delivery-tracker"
-    Environment = var.environment
   }
 }

@@ -1,10 +1,5 @@
 resource "aws_ecs_cluster" "cluster" {
   name = "delivery-tracker-${var.environment}"
-
-  tags = {
-    Project     = "delivery-tracker"
-    Environment = var.environment
-  }
 }
 
 resource "aws_ecs_service" "service" {
@@ -26,11 +21,6 @@ resource "aws_ecs_service" "service" {
       aws_security_group.ecs.id,
     ]
     assign_public_ip = true
-  }
-
-  tags = {
-    Project     = "delivery-tracker"
-    Environment = var.environment
   }
 }
 

@@ -1,10 +1,5 @@
 resource "aws_s3_bucket" "access_logs" {
   bucket = "delivery-tracker-${var.environment}-access-logs"
-
-  tags = {
-    Project     = "delivery-tracker"
-    Environment = var.environment
-  }
 }
 
 resource "aws_s3_bucket_policy" "allow_access_from_another_account" {

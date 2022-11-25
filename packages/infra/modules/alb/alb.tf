@@ -11,11 +11,6 @@ resource "aws_alb" "alb" {
     prefix  = "lb-delivery-tracker"
     enabled = true
   }
-
-  tags = {
-    Project     = "delivery-tracker"
-    Environment = var.environment
-  }
 }
 
 resource "aws_alb_listener" "http" {
